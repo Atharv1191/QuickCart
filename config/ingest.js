@@ -9,7 +9,7 @@ export const inngest = new Inngest({ id: "quickcart-next" });
 
 //Ingest function to save user data to a database
 
-export const syncUserCreation = Inngest.crateFunction(
+export const syncUserCreation = inngest.crateFunction(
     {
     id:'sync-user-from-clerk'
 },
@@ -31,7 +31,7 @@ async({event})=>{
 
 )
 //Ingest function to update user data in the database
-export const syncUserUpdation = Inngest.crateFunction(
+export const syncUserUpdation = inngest.crateFunction(
     {
         id:'update-user-from-clerk'
     },
@@ -51,7 +51,7 @@ export const syncUserUpdation = Inngest.crateFunction(
     }
 )
 //Ingest function to delete user data from the database
-export const syncUserDeletion = Ingest.crateFunction(
+export const syncUserDeletion = inngest.crateFunction(
     {
         id:'delete-user-with-clerk'   
 },
