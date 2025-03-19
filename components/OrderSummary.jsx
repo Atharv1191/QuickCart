@@ -1,39 +1,59 @@
-import { addressDummyData } from "@/assets/assets";
 import { useAppContext } from "@/context/AppContext";
+import axios from "axios";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const OrderSummary = () => {
-
-  const { currency, router, getCartCount, getCartAmount } = useAppContext()
+  const { currency, getToken, user, getCartCount, getCartAmount, router } = useAppContext();
+  
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const [userAddresses, setUserAddresses] = useState([]);
 
+  // Fetch Addresses from API
   const fetchUserAddresses = async () => {
-    setUserAddresses(addressDummyData);
-  }
+    try {
+      const token = await getToken();
+      const { data } = await axios.get('/api/user/data/get-address', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
+      if (data.success) {
+        console.log("Fetched Addresses:", data.addresses); // ✅ Debugging
+        setUserAddresses(data.addresses);
+
+        if (data.addresses.length > 0) {
+          setSelectedAddress(data.addresses[0]); // Default to first address
+          console.log("Selected Address:", data.addresses[0]); // ✅ Debugging
+        }
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching addresses:", error);
+      toast.error("Failed to load addresses.");
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchUserAddresses();
+    }
+  }, [user]);
+
+  // Handle Address Selection
   const handleAddressSelect = (address) => {
     setSelectedAddress(address);
     setIsDropdownOpen(false);
   };
 
-  const createOrder = async () => {
-
-  }
-
-  useEffect(() => {
-    fetchUserAddresses();
-  }, [])
-
   return (
     <div className="w-full md:w-96 bg-gray-500/5 p-5">
-      <h2 className="text-xl md:text-2xl font-medium text-gray-700">
-        Order Summary
-      </h2>
+      <h2 className="text-xl md:text-2xl font-medium text-gray-700">Order Summary</h2>
       <hr className="border-gray-500/30 my-5" />
+
       <div className="space-y-6">
+        {/* Address Dropdown */}
         <div>
           <label className="text-base font-medium uppercase text-gray-600 block mb-2">
             Select Address
@@ -48,24 +68,30 @@ const OrderSummary = () => {
                   ? `${selectedAddress.fullName}, ${selectedAddress.area}, ${selectedAddress.city}, ${selectedAddress.state}`
                   : "Select Address"}
               </span>
-              <svg className={`w-5 h-5 inline float-right transition-transform duration-200 ${isDropdownOpen ? "rotate-0" : "-rotate-90"}`}
+              <svg className={`w-5 h-5 inline float-right transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : "rotate-0"}`}
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#6B7280"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
+            {/* Dropdown List */}
             {isDropdownOpen && (
               <ul className="absolute w-full bg-white border shadow-md mt-1 z-10 py-1.5">
-                {userAddresses.map((address, index) => (
-                  <li
-                    key={index}
-                    className="px-4 py-2 hover:bg-gray-500/10 cursor-pointer"
-                    onClick={() => handleAddressSelect(address)}
-                  >
-                    {address.fullName}, {address.area}, {address.city}, {address.state}
-                  </li>
-                ))}
+                {userAddresses.length > 0 ? (
+                  userAddresses.map((address, index) => (
+                    <li
+                      key={index}
+                      className="px-4 py-2 hover:bg-gray-500/10 cursor-pointer"
+                      onClick={() => handleAddressSelect(address)}
+                    >
+                      {address.fullName}, {address.area}, {address.city}, {address.state}
+                    </li>
+                  ))
+                ) : (
+                  <li className="px-4 py-2 text-gray-500">No addresses found</li>
+                )}
+                {/* Add New Address Option */}
                 <li
                   onClick={() => router.push("/add-address")}
                   className="px-4 py-2 hover:bg-gray-500/10 cursor-pointer text-center"
@@ -77,6 +103,7 @@ const OrderSummary = () => {
           </div>
         </div>
 
+        {/* Promo Code Input */}
         <div>
           <label className="text-base font-medium uppercase text-gray-600 block mb-2">
             Promo Code
@@ -95,6 +122,7 @@ const OrderSummary = () => {
 
         <hr className="border-gray-500/30 my-5" />
 
+        {/* Order Summary */}
         <div className="space-y-4">
           <div className="flex justify-between text-base font-medium">
             <p className="uppercase text-gray-600">Items {getCartCount()}</p>
@@ -115,7 +143,8 @@ const OrderSummary = () => {
         </div>
       </div>
 
-      <button onClick={createOrder} className="w-full bg-orange-600 text-white py-3 mt-5 hover:bg-orange-700">
+      {/* Place Order Button */}
+      <button className="w-full bg-orange-600 text-white py-3 mt-5 hover:bg-orange-700">
         Place Order
       </button>
     </div>
