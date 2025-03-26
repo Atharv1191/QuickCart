@@ -34,6 +34,15 @@ const orderSchema = new mongoose.Schema({
     date: {
         type: Date,
         default: Date.now
+    },
+    paymentType:{
+        type: String,
+        required: true
+    },
+    isPaid:{
+        type: Boolean,
+        required: true,
+        default: false
     }
 });
 

@@ -234,7 +234,7 @@ import toast from "react-hot-toast";
 
 const OrderSummary = () => {
   const { currency, getToken, user, getCartCount, getCartAmount, router, cartItems } = useAppContext();
-  
+
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [userAddresses, setUserAddresses] = useState([]);
@@ -266,6 +266,7 @@ const OrderSummary = () => {
       toast.error("Failed to load addresses.");
     }
   };
+
 
   useEffect(() => {
     if (user) {
@@ -316,6 +317,44 @@ const OrderSummary = () => {
       toast.error("Failed to create order.");
     }
   };
+  const createOrderStripe = async () => {
+    try {
+      if (!selectedAddress) {
+        return toast.error("Please select an address");
+      }
+
+      console.log("Cart Items before filtering:", cartItems);
+
+      let cartItemsArray = Object.keys(cartItems).map((key) => ({
+        product: key,
+        quantity: cartItems[key],
+      })).filter(item => item.quantity > 0);
+
+      console.log("Filtered Cart Items Array:", cartItemsArray);
+
+      if (cartItemsArray.length === 0) {
+        return toast.error("Cart is empty");
+      }
+
+      const token = await getToken();
+      const { data } = await axios.post(
+        "/api/order/create/stripe",
+        { address: selectedAddress._id, items: cartItemsArray },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (data.success) {
+        window.location.href = data.url
+      } else {
+        toast.error(data.message)
+      }
+
+
+
+    } catch (error) {
+      toast.error(error.message);
+
+    }
+  }
 
   return (
     <div className="w-full md:w-96 bg-gray-500/5 p-5">
@@ -375,7 +414,7 @@ const OrderSummary = () => {
         </div>
       </div>
 
-      <button onClick={createOrder} className="w-full bg-orange-600 text-white py-3 mt-5 hover:bg-orange-700">
+      <button onClick={createOrderStripe} className="w-full bg-orange-600 text-white py-3 mt-5 hover:bg-orange-700">
         Place Order
       </button>
     </div>
